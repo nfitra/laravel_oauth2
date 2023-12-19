@@ -30,8 +30,15 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 //});
 
 
-Route::group(['middleware' => ['cors', 'json.response']], function () {
+Route::group(['prefix' => 'openapi', 'middleware' => ['cors', 'json.response']], function () {
+
+    Route::group(['prefix' => 'v1.0'], function () {
+        Route::post('/access-token/b2b', [\App\Http\Controllers\OpenAPI\v1_0\AccessToken::class, 'b2b']);
+    });
+
     Route::group(['middleware' => 'auth:api'], function () {
-        Route::get('inquery', [\App\Http\Controllers\Inquery::class, 'index'])->middleware(['scope:test1']);
+        Route::group(['middleware' => 'scope:test1'], function () {
+            Route::get('inquery', [\App\Http\Controllers\Inquery::class, 'index']);
+        });
     });
 });
