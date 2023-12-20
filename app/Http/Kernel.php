@@ -75,5 +75,8 @@ class Kernel extends HttpKernel
         'client' => \Laravel\Passport\Http\Middleware\CheckClientCredentials::class,
         'scopes' => \Laravel\Passport\Http\Middleware\CheckScopes::class,
         'scope' => \Laravel\Passport\Http\Middleware\CheckForAnyScope::class,
+
+        'asymmetric' => \App\Http\Middleware\VerifyAsymmetric::class,
+        'symmetric' => \App\Http\Middleware\VerifySymmetric::class,
     ];
 }

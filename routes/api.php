@@ -29,16 +29,22 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 //    });
 //});
 
+Route::group(['prefix' => 'client'], function() {
+    Route::get('/', [\App\Http\Controllers\Client::class, 'index']);
+    Route::get('/asymmetric', [\App\Http\Controllers\Client::class, 'asymmetric']);
+    Route::get('/symmetric', [\App\Http\Controllers\Client::class, 'symmetric']);
+});
 
 Route::group(['prefix' => 'openapi', 'middleware' => ['cors', 'json.response']], function () {
-
-    Route::group(['prefix' => 'v1.0'], function () {
+    Route::group(['middleware' => 'asymmetric', 'prefix' => 'v1.0'], function () {
         Route::post('/access-token/b2b', [\App\Http\Controllers\OpenAPI\v1_0\AccessToken::class, 'b2b']);
     });
 
-    Route::group(['middleware' => 'auth:api'], function () {
+    Route::group(['middleware' => ['symmetric']], function () {
+        Route::get('inquery', [\App\Http\Controllers\Inquery::class, 'index']);
+
         Route::group(['middleware' => 'scope:test1'], function () {
-            Route::get('inquery', [\App\Http\Controllers\Inquery::class, 'index']);
+
         });
     });
 });

@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
-class Test extends Controller
+class Client extends Controller
 {
     public function index()
     {
@@ -42,36 +42,43 @@ class Test extends Controller
         $securedHash = $this->SHA256withRSA($privateKey, $string2Sign);
 
         $headers = array(
-            'Accept' => 'application/json',
+            'Content-Type' => 'application/json',
             'X-CLIENT-KEY' => $apiCredential,
             'X-SIGNATURE' => $securedHash,
             'X-TIMESTAMP' => strval($formattedTimestamp),
         );
 
-//        dd($url,$string2Sign, $apiCredential, $apiCredentialSecret, 'b66925de-d8ec-476e-a170-6cf06c863b78|2017-03-17T09:44:18+07:00', $headers);
         return Http::timeout(5)->withHeaders($headers)->withBody($body)->post($url);
     }
 
     public function symmetric()
     {
-        $url = url('/banking/v2/corporates/h2hauto009/accounts/0611104625/statements?StartDate=2017-03-01&EndDate=2017-03-017&ab=ddasdasd&ab=br&AB=ac&AB=awefewfewa');
-        $apiCredential = 'b66925de-d8ec-476e-a170-6cf06c863b78';
+        $url = '' ?: url('/openapi/inquery');
         $apiCredentialSecret = 'efc71ced-b0e7-4b47-8270-3c24829764aa';
         $accessToken = 'gp9HjjEj813Y9JGoqwOeOPWbnt4CUpvIJbU1mMU4a11MNDZ7Sg5u9a';
 
         // 2017-03-17T09:44:18+07:00
         $timestamp = time();
-        $formattedTimestamp = '2017-03-17T09:44:18+07:00' ?: date('c', $timestamp);
+        $formattedTimestamp = '' ?: date('c', $timestamp);
 
-        $body = null;
+        $body = '{"CorporateID":"H2HAUTO009","SourceAccountNumber":"0611104625","TransactionID":"00177914","TransactionDate":"2017-03-17","ReferenceID":"1234567890098765","CurrencyCode":"IDR","Amount":"175000000","BeneficiaryAccountNumber":"0613106704","Remark1":"Pencairan Kredit","Remark2":"1234567890098765"}';
 
         $uri_encoded = $this->uriEncode($url);
         $examined_body = $this->examineBody($body);
-        $method = "GET";
+        $method = 'GET';
 
         $string2Sign = "$method:$uri_encoded:$accessToken:$examined_body:$formattedTimestamp";
+        $securedHash = $this->hmacSHA512($apiCredentialSecret, $string2Sign);
 
-        print_r([$uri_encoded, $examined_body, $string2Sign]); die();
+        $headers = array(
+            'Content-Type' => 'application/json',
+            'Authorization' => "Bearer $accessToken",
+            'X-EXTERNAL-ID' => '550e8400-e29b-41d4-a716-446655440000', // Unique reference number
+            'X-SIGNATURE' => $securedHash,
+            'X-TIMESTAMP' => strval($formattedTimestamp),
+        );
+
+        return Http::timeout(5)->withHeaders($headers)->withBody($body)->get($url);
     }
 
     private function SHA256withRSA($privateKey, $message)
@@ -90,63 +97,43 @@ class Test extends Controller
         return $base64Signature;
     }
 
-    private function verifySHA256withRSA($publicKey, $message, $base64Signature)
+    function hmacSHA512($secretKey, $message)
     {
-        $publicKeyResource = openssl_pkey_get_public($publicKey);
-
-        if ($publicKeyResource === false) {
-            die('Unable to load public key');
-        }
-
-        $signature = base64_decode($base64Signature);
-        $verificationResult = openssl_verify($message, $signature, $publicKeyResource, OPENSSL_ALGO_SHA256);
-        openssl_free_key($publicKeyResource);
-
-        return ($verificationResult === 1);
+        $hash = hash_hmac('sha512', $message, $secretKey, true);
+        $base64EncodedHash = base64_encode($hash);
+        return $base64EncodedHash;
     }
 
     private function uriEncode($url)
     {
-        // Parse the URL
         $parsed_url = parse_url($url);
 
-        // Extract the path and query string
         $path = isset($parsed_url['path']) ? $parsed_url['path'] : '/';
         $query = isset($parsed_url['query']) ? $parsed_url['query'] : '';
 
-        // Do not URI-encode forward slash (/) if used as a path component
         $encoded_path = implode('/', array_map('rawurlencode', explode('/', $path)));
 
-        // Split the query string into individual parameters
         parse_str($query, $query_params);
-
-        // Do not URI-encode certain characters in query parameters
         foreach ($query_params as $param => &$value) {
             $value = str_replace(['%2F', '%3F', '%3D', '%26'], ['/', '?', '=', '&'], rawurlencode(urldecode($value)));
         }
 
-        // Identify parameters with the same name
         $param_counts = array_count_values(array_keys($query_params));
         $duplicate_params = array_filter($param_counts, function ($count) {
             return $count > 1;
         });
 
-        // Re-order the parameters lexicographically by name and then by value
         uksort($query_params, 'strcmp');
 
-        // Use uasort only for parameters with the same name
         foreach ($duplicate_params as $param => $count) {
             uasort($query_params, function ($a, $b) {
                 $cmp = strcmp(urlencode($a), urlencode($b));
                 return ($cmp !== 0) ? $cmp : strcmp($a, $b);
             });
-            break; // Process only one set of duplicate parameters
+            break;
         }
 
-        // Do not URI-encode these characters in the sorted query string
         $sorted_query = http_build_query($query_params, '', '&', PHP_QUERY_RFC3986);
-
-        // Combine the path and the sorted query string
         $relative_url = $encoded_path . ($sorted_query ? '?' . $sorted_query : '');
 
         return $relative_url;
@@ -155,11 +142,26 @@ class Test extends Controller
     private function minifyJson($json)
     {
         $data = json_decode($json, true);
-        $minified_json = json_encode($data, JSON_UNESCAPED_UNICODE);
-        return $minified_json;
+        $minified_json = $this->minifyJsonRecursive($data);
+        return json_encode($minified_json, JSON_UNESCAPED_UNICODE);
     }
 
-    function examineBody($body) {
+    private function minifyJsonRecursive($data)
+    {
+        if (is_array($data)) {
+            foreach ($data as $key => $value) {
+                if (is_array($value) || is_object($value)) {
+                    $data[$key] = $this->minifyJsonRecursive($value);
+                } elseif (is_string($value) && strpos($value, ' ') === false) {
+                    $data[$key] = preg_replace('/\s+/', '', $value);
+                }
+            }
+        }
+        return $data;
+    }
+
+    function examineBody($body)
+    {
         $minified_json = !is_null($body) ? $this->minifyJson($body) : null;
         return strtolower(hash('SHA256', $minified_json));
     }

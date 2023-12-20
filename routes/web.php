@@ -16,7 +16,3 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
-
-Route::get('/test', [\App\Http\Controllers\Test::class, 'index']);
-Route::get('/test/asymmetric', [\App\Http\Controllers\Test::class, 'asymmetric']);
-Route::get('/test/symmetric', [\App\Http\Controllers\Test::class, 'symmetric']);

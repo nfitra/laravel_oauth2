@@ -23,8 +23,8 @@ class AuthServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Passport::tokensCan([
-            'test1' => 'Test Scope 1',
-            'test2' => 'Test Scope 2',
+            'test1' => 'Client Scope 1',
+            'test2' => 'Client Scope 2',
         ]);
 
         Passport::setDefaultScope([
