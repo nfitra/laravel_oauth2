@@ -29,22 +29,26 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 //    });
 //});
 
-Route::group(['prefix' => 'client'], function() {
-    Route::get('/', [\App\Http\Controllers\Client::class, 'index']);
+Route::group(['prefix' => 'client'], function () {
     Route::get('/asymmetric', [\App\Http\Controllers\Client::class, 'asymmetric']);
     Route::get('/symmetric', [\App\Http\Controllers\Client::class, 'symmetric']);
 });
 
-Route::group(['prefix' => 'openapi', 'middleware' => ['cors', 'json.response']], function () {
-    Route::group(['middleware' => 'asymmetric', 'prefix' => 'v1.0'], function () {
-        Route::post('/access-token/b2b', [\App\Http\Controllers\OpenAPI\v1_0\AccessToken::class, 'b2b']);
-    });
+Route::group(['middleware' => ['cors', 'json.response']], function () {
+    Route::group(['prefix' => 'openapi/v1.0'], function () {
+        Route::post('/access-token/issue', [\Laravel\Passport\Http\Controllers\AccessTokenController::class, 'issueToken']);
 
-    Route::group(['middleware' => ['symmetric']], function () {
-        Route::get('inquery', [\App\Http\Controllers\Inquery::class, 'index']);
+        Route::group(['middleware' => ['logs', 'asymmetric']], function () {
+            Route::group(['prefix' => 'access-token'], function () {
+                Route::post('/b2b', [\App\Http\Controllers\OpenAPI\v1_0\AccessToken::class, 'b2b']);
+            });
+        });
 
-        Route::group(['middleware' => 'scope:test1'], function () {
-
+        Route::group(['middleware' => ['logs', 'client', 'symmetric']], function () {
+            Route::group(['prefix' => 'transfer-va'], function () {
+                Route::get('/inquiry', [\App\Http\Controllers\TransferVA::class, 'inquiry']);
+                Route::get('/payment', [\App\Http\Controllers\TransferVA::class, 'payment']);
+            });
         });
     });
 });

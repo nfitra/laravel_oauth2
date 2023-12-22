@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use DateTime;
 use Illuminate\Http\Request;
+use Laravel\Passport\Passport;
 use Symfony\Component\HttpFoundation\Response;
 
 class VerifyAsymmetric
@@ -43,26 +44,20 @@ class VerifyAsymmetric
             ], 400);
         }
 
-        if (!$this->isClientExists($clientKey)) {
-            return response()->json([
-                'responseCode' => '4017300',
-                'responseMessage' => 'Unauthorized. [Unknown client]',
-            ], 401);
-        }
-
-        $publicKey = <<<EOD
-            -----BEGIN PUBLIC KEY-----
-            MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtatInMYNr4JY7l46SD6VJ1gC/TbEVrRTFeBRR60togv9Uuw/DNZ9W/XYuwuU2LzanKJSLS4QNOlzIJu1RetaWR4vAgospls2vT71O/Q3wvVjRXQaYEsWouHRQlcWADPHbt1XH5U+KmD20Lx1WHcswgBJdv+n3nFbJKdycqb7Gb5mjrO
-            dzxXSKaBECHBd2Cvl4OFhopDRLoBpzhUoKOtFnfeibOkaOEDXYJlD5e7r6xyem0p3DfyJcH9Xixi+m1NOJYDBZh8CnSAGhELmWC4zDdaTaAiwxRXSf2AFKMtN+tOFfyFzYikYK0fbhkiPCmBe8CTZ9Mu+nOl+g6W/H2vvwwIDAQAB
-            -----END PUBLIC KEY-----
-            EOD;
-
+        $publicKey = \Storage::disk('local')->get(env('PUBLIC_KEY'));
         $string2Sign = "$clientKey|$timestamp";
 
         if (!$this->verifySHA256withRSA($publicKey, $string2Sign, $signature)) {
             return response()->json([
                 'responseCode' => '4017300',
                 'responseMessage' => 'Unauthorized. [Signature]',
+            ], 401);
+        }
+
+        if (!$this->isExistsClient($clientKey)) {
+            return response()->json([
+                'responseCode' => '4017300',
+                'responseMessage' => 'Unauthorized. [Unknown client]',
             ], 401);
         }
 
@@ -101,8 +96,8 @@ class VerifyAsymmetric
         return $this->isUUID($clientKey);
     }
 
-    private function isClientExists()
+    private function isExistsClient($clientKey)
     {
-        return true;
+        return Passport::client()->where('id', $clientKey)->exists();
     }
 }

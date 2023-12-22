@@ -4,9 +4,12 @@ namespace App\Http\Middleware;
 
 use Closure;
 use DateTime;
+use Lcobucci\JWT\Configuration;
+use Lcobucci\JWT\Parser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Laravel\Passport\ClientRepository;
+use Laravel\Passport\Passport;
 use Symfony\Component\HttpFoundation\Response;
 
 class VerifySymmetric
@@ -43,7 +46,7 @@ class VerifySymmetric
             ], 400);
         }
 
-        $secretKey = 'efc71ced-b0e7-4b47-8270-3c24829764aa' ?: $this->getSecretKeyByExternalId($externalId);
+        $secretKey = $this->getSecretKeyByExternalId();
 
         $method = strtoupper($request->method());
         $uri_encoded = $this->uriEncode($request->getRequestUri());
@@ -51,6 +54,7 @@ class VerifySymmetric
         $access_token = $request->bearerToken();
 
         $string2Sign = "$method:$uri_encoded:$access_token:$examined_body:$timestamp";
+//        print_r([$secretKey, $uri_encoded, $examined_body, $access_token, $string2Sign]);die();
 
         if (!$this->verifyHmacSHA512($secretKey, $string2Sign, $signature)) {
             return response()->json([
@@ -59,10 +63,10 @@ class VerifySymmetric
             ], 401);
         }
 
-        if (!$this->isClientExists($externalId)) {
+        if (!$this->isExistsExternalId($externalId)) {
             return response()->json([
                 'responseCode' => '4017300',
-                'responseMessage' => 'Unauthorized. [Unknown client]',
+                'responseMessage' => 'Unauthorized. [Unknown external id]',
             ], 401);
         }
 
@@ -80,14 +84,15 @@ class VerifySymmetric
         return strlen($externalId) > 36 || !is_string($externalId) ? 0 : 1;
     }
 
-    private function isClientExists($externalId)
+    private function isExistsExternalId($externalId)
     {
-        return true;
+        return $externalId == '123' ? 1 : 0;
     }
 
-    private function getSecretKeyByExternalId($externalId)
+    private function getSecretKeyByExternalId()
     {
-        return true;
+        $client = auth('api')->client();
+        return $client->secret;
     }
 
     private function verifyHmacSHA512($secretKey, $message, $expectedHash)

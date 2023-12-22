@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Http;
 use Laravel\Passport\ClientRepository;
 use Laravel\Passport\Passport;
 
@@ -16,22 +17,27 @@ class AccessToken extends Controller
         $grantType = $request->input('grantType');
 
         if ($grantType === 'client_credentials') {
-
-
-            $clients = App::make(ClientRepository::class);
-
-            $expireTime = now()->addMinutes(15);
-            Passport::tokensExpireIn($expireTime);
-
             $clientKey = $request->header('X-CLIENT-KEY');
-            $token = $clients->create(null, $clientKey, '');
+            $clientSecret = Passport::client()->find($clientKey)->secret;
 
+            $url = url('/openapi/v1.0/access-token/issue');
+            $body = json_encode([
+                'grant_type' => 'client_credentials',
+                'client_id' => $clientKey,
+                'client_secret' => $clientSecret,
+            ]);
+            $response = Http::timeout(5)->withBody($body)->post($url);
+            if($response->status() != 100) {
+                return $response;
+            }
+
+            $retrievedToken = json_decode($response->body());
             return response()->json([
                 'responseCode' => '2007300',
                 'responseMessage' => 'Successful',
-                'accessToken' => $token->secret,
-                'tokenType' => 'Bearer',
-                'tokenTimeout' => $expireTime->diffInSeconds() + 1,
+                'accessToken' => $retrievedToken->access_token,
+                'tokenType' => $retrievedToken->token_type,
+                'tokenTimeout' => $retrievedToken->expires_in,
             ], 400);
         }
     }
