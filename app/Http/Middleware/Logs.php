@@ -22,9 +22,11 @@ class Logs
 
         $path = $request->path();
         if($path == 'openapi/v1.0/transfer-va/inquiry') {
-            $module = 'inquiry';
+            $module = 'va_inquiry';
         } else if ($path == 'openapi/v1.0/transfer-va/payment') {
-            $module = 'payment';
+            $module = 'va_payment';
+        } else if ($path == 'openapi/v1.0/access-token/b2b') {
+            $module = 'token_b2b';
         } else {
             $module = 'other';
         }
@@ -35,7 +37,10 @@ class Logs
             'method' => $request->getMethod(),
             'uri' => $request->getRequestUri(),
             'module' => $module,
-            'client_id' => isset(auth('api')->client()->id) ? auth('api')->client()->id : "unknown",
+            'channel_id' => $request->header('CHANNEL-ID') ?: null,
+            'partner_id' => $request->header('X-PARTNER-ID') ?: null,
+            'external_id' => $request->header('X-EXTERNAL-ID') ?: null,
+            'client_id' => isset(auth('api')->client()->id) ? auth('api')->client()->id : null,
             'request_header' => json_encode($request->headers->all()),
             'request_body' => json_encode($request->all()),
             'response' => $response->getContent(),

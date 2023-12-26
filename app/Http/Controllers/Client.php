@@ -13,19 +13,18 @@ class Client extends Controller
         $apiCredential = $request->input('api-credential');
         $privateKey = \Storage::disk('local')->get(env('PRIVATE_KEY'));
 
-        $timestamp = time();
-        $formattedTimestamp = $request->input('timestamp') ?: date('c', $timestamp);
+        $timestamp = $request->input('timestamp') ?: now()->toIso8601String();
 
         $body = $request->getContent();
 
-        $string2Sign = "$apiCredential|$formattedTimestamp";
-        $securedHash = $this->SHA256withRSA($privateKey, $string2Sign);
+        $string2Sign = "$apiCredential|$timestamp";
+        $securedHash = $this->sha256Rsa($privateKey, $string2Sign);
 
         $headers = array(
             'Content-Type' => 'application/json',
             'X-CLIENT-KEY' => $apiCredential,
             'X-SIGNATURE' => $securedHash,
-            'X-TIMESTAMP' => strval($formattedTimestamp),
+            'X-TIMESTAMP' => strval($timestamp),
         );
 
         return Http::timeout(5)->withHeaders($headers)->withBody($body)->post($url);
@@ -36,10 +35,9 @@ class Client extends Controller
         $url = $request->input('url');
         $apiCredentialSecret = $request->input('api-credential-secret');
         $accessToken = $request->input('access-token');
-        $externalId = $request->input('external-id');
+        $externalId = $request->input('external-id') ?: floor(microtime(true) * 1000) . mt_rand();
 
-        $timestamp = time();
-        $formattedTimestamp = $request->input('timestamp') ?: date('c', $timestamp);
+        $timestamp = $request->input('timestamp') ?: now()->toIso8601String();
 
         $body = $request->getContent();
 
@@ -47,22 +45,23 @@ class Client extends Controller
         $examined_body = $this->examineBody($body);
         $method = strtoupper("GET");
 
-        $string2Sign = "$method:$uri_encoded:$accessToken:$examined_body:$formattedTimestamp";
+        $string2Sign = "$method:$uri_encoded:$accessToken:$examined_body:$timestamp";
         $securedHash = $this->hmacSHA512($apiCredentialSecret, $string2Sign);
-//        print_r($string2Sign);die();
+//        $uniqueId = floor(microtime(true) * 1000) .'-' . mt_rand();
+//        print_r([$uniqueId, $securedHash, $string2Sign, $externalId]);die();
 
         $headers = array(
             'Content-Type' => 'application/json',
             'Authorization' => "Bearer $accessToken",
             'X-EXTERNAL-ID' => $externalId,
             'X-SIGNATURE' => $securedHash,
-            'X-TIMESTAMP' => strval($formattedTimestamp),
+            'X-TIMESTAMP' => strval($timestamp),
         );
 
         return Http::timeout(5)->withHeaders($headers)->withBody($body)->get($url);
     }
 
-    private function SHA256withRSA($privateKey, $message)
+    private function sha256Rsa($privateKey, $message)
     {
         $privateKeyResource = openssl_pkey_get_private($privateKey);
 

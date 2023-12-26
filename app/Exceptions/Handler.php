@@ -2,6 +2,7 @@
 
 namespace App\Exceptions;
 
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Throwable;
 
@@ -26,5 +27,17 @@ class Handler extends ExceptionHandler
         $this->reportable(function (Throwable $e) {
             //
         });
+    }
+
+    protected function unauthenticated($request, AuthenticationException $exception)
+    {
+        if ($request->expectsJson()){
+            return response()->json([
+                'responseCode' => '4012500',
+                'responseMessage' => 'Unauthorized. [Unknown client]',
+            ], 401);
+        }
+
+        return parent::render($request, $exception);
     }
 }

@@ -33,7 +33,7 @@ class VerifyAsymmetric
         if (!$this->isISO8601Timestamp($timestamp)) {
             return response()->json([
                 'responseCode' => '4007301',
-                'responseMessage' => 'Invalid timestamp format [X-TIMESTAMP]',
+                'responseMessage' => 'Invalid field format [X-TIMESTAMP]',
             ], 400);
         }
 
@@ -44,16 +44,6 @@ class VerifyAsymmetric
             ], 400);
         }
 
-        $publicKey = \Storage::disk('local')->get(env('PUBLIC_KEY'));
-        $string2Sign = "$clientKey|$timestamp";
-
-        if (!$this->verifySHA256withRSA($publicKey, $string2Sign, $signature)) {
-            return response()->json([
-                'responseCode' => '4017300',
-                'responseMessage' => 'Unauthorized. [Signature]',
-            ], 401);
-        }
-
         if (!$this->isExistsClient($clientKey)) {
             return response()->json([
                 'responseCode' => '4017300',
@@ -61,10 +51,20 @@ class VerifyAsymmetric
             ], 401);
         }
 
+        $publicKey = \Storage::disk('local')->get(env('PUBLIC_KEY'));
+        $string2Sign = "$clientKey|$timestamp";
+
+        if (!$this->verifysha256Rsa($publicKey, $string2Sign, $signature)) {
+            return response()->json([
+                'responseCode' => '4017300',
+                'responseMessage' => 'Unauthorized. [Signature]',
+            ], 401);
+        }
+
         return $next($request);
     }
 
-    private function verifySHA256withRSA($publicKey, $message, $base64Signature)
+    private function verifysha256Rsa($publicKey, $message, $base64Signature)
     {
         $publicKeyResource = openssl_pkey_get_public($publicKey);
 

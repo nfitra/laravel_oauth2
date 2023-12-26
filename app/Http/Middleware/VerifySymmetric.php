@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Log;
+use Carbon\Carbon;
 use Closure;
 use DateTime;
 use Lcobucci\JWT\Configuration;
@@ -35,7 +37,7 @@ class VerifySymmetric
         if (!$this->isISO8601Timestamp($timestamp)) {
             return response()->json([
                 'responseCode' => '4007301',
-                'responseMessage' => 'Invalid timestamp format [X-TIMESTAMP]',
+                'responseMessage' => 'Invalid field format [X-TIMESTAMP]',
             ], 400);
         }
 
@@ -63,13 +65,6 @@ class VerifySymmetric
             ], 401);
         }
 
-        if (!$this->isExistsExternalId($externalId)) {
-            return response()->json([
-                'responseCode' => '4017300',
-                'responseMessage' => 'Unauthorized. [Unknown external id]',
-            ], 401);
-        }
-
         return $next($request);
     }
 
@@ -81,12 +76,15 @@ class VerifySymmetric
 
     private function isValidExternalId($externalId)
     {
-        return strlen($externalId) > 36 || !is_string($externalId) ? 0 : 1;
-    }
-
-    private function isExistsExternalId($externalId)
-    {
-        return $externalId == '123' ? 1 : 0;
+        if(strlen($externalId) > 36 || !is_numeric($externalId)) {
+            return false;
+        }
+        $currentDay = Carbon::now()->toDateString();
+        $isExistExternalId = Log::where('external_id', $externalId)->whereDate('timestamp', $currentDay)->exists();
+        if($isExistExternalId) {
+            return false;
+        }
+        return true;
     }
 
     private function getSecretKeyByExternalId()

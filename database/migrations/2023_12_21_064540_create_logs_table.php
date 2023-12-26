@@ -17,8 +17,11 @@ return new class extends Migration
             $table->text('ip');
             $table->text('method');
             $table->text('uri');
-            $table->enum('module', ['inquiry', 'payment', 'other']);
-            $table->string('client_id');
+            $table->enum('module', ['va_inquiry', 'va_payment', 'token_b2b', 'other']);
+            $table->string('channel_id')->nullable(true);
+            $table->string('partner_id')->nullable(true);
+            $table->string('external_id')->nullable(true);
+            $table->string('client_id')->nullable(true);
             $table->text('request_header');
             $table->text('request_body');
             $table->text('response');
