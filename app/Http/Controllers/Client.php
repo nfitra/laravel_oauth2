@@ -27,7 +27,7 @@ class Client extends Controller
             'X-TIMESTAMP' => strval($timestamp),
         );
 
-        return Http::timeout(5)->withHeaders($headers)->withBody($body)->post($url);
+        return Http::timeout(10)->withHeaders($headers)->withBody($body)->post($url);
     }
 
     public function symmetric(Request $request)
@@ -47,8 +47,6 @@ class Client extends Controller
 
         $string2Sign = "$method:$uri_encoded:$accessToken:$examined_body:$timestamp";
         $securedHash = $this->hmacSHA512($apiCredentialSecret, $string2Sign);
-//        $uniqueId = floor(microtime(true) * 1000) .'-' . mt_rand();
-//        print_r([$uniqueId, $securedHash, $string2Sign, $externalId]);die();
 
         $headers = array(
             'Content-Type' => 'application/json',
@@ -58,7 +56,7 @@ class Client extends Controller
             'X-TIMESTAMP' => strval($timestamp),
         );
 
-        return Http::timeout(5)->withHeaders($headers)->withBody($body)->get($url);
+        return Http::timeout(10)->withHeaders($headers)->withBody($body)->get($url);
     }
 
     private function sha256Rsa($privateKey, $message)

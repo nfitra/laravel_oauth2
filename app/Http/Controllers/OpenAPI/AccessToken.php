@@ -1,13 +1,10 @@
 <?php
 
-namespace App\Http\Controllers\OpenAPI\v1_0;
+namespace App\Http\Controllers\OpenAPI;
 
 use App\Http\Controllers\Controller;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Http;
-use Laravel\Passport\ClientRepository;
 use Laravel\Passport\Passport;
 
 class AccessToken extends Controller
@@ -26,7 +23,7 @@ class AccessToken extends Controller
                 'client_id' => $clientKey,
                 'client_secret' => $clientSecret,
             ]);
-            $response = Http::timeout(5)->withBody($body)->post($url);
+            $response = Http::timeout(10)->withBody($body)->post($url);
             if($response->status() != 100) {
                 return $response;
             }
@@ -38,6 +35,11 @@ class AccessToken extends Controller
                 'accessToken' => $retrievedToken->access_token,
                 'tokenType' => $retrievedToken->token_type,
                 'tokenTimeout' => $retrievedToken->expires_in,
+            ], 400);
+        } else {
+            return response()->json([
+                'responseCode' => '200',
+                'responseMessage' => 'Nothing in here',
             ], 400);
         }
     }

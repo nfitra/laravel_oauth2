@@ -2,7 +2,6 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Auth\AuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -40,14 +39,14 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
 
         Route::group(['middleware' => ['logs', 'asymmetric']], function () {
             Route::group(['prefix' => 'access-token'], function () {
-                Route::post('/b2b', [\App\Http\Controllers\OpenAPI\v1_0\AccessToken::class, 'b2b']);
+                Route::post('/b2b', [\App\Http\Controllers\OpenAPI\AccessToken::class, 'b2b']);
             });
         });
 
         Route::group(['middleware' => ['logs', 'client', 'symmetric']], function () {
             Route::group(['prefix' => 'transfer-va'], function () {
-                Route::get('/inquiry', [\App\Http\Controllers\TransferVA::class, 'inquiry']);
-                Route::get('/payment', [\App\Http\Controllers\TransferVA::class, 'payment']);
+                Route::get('/inquiry', [\App\Http\Controllers\OpenAPI\TransferVA::class, 'inquiry']);
+                Route::get('/payment', [\App\Http\Controllers\OpenAPI\TransferVA::class, 'payment']);
             });
         });
     });
