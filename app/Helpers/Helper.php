@@ -3,7 +3,7 @@
 namespace App\Helpers;
 
 if (!function_exists('vaData')) {
-    function vaData($message)
+    function getVirtualAccountValue($message)
     {
         $data = [
             'inquiryStatus' => '01',

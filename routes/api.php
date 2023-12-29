@@ -35,7 +35,7 @@ Route::group(['prefix' => 'client'], function () {
 
 Route::group(['middleware' => ['cors', 'json.response']], function () {
     Route::group(['prefix' => 'openapi/v1.0'], function () {
-        Route::post('/access-token/issue', [\Laravel\Passport\Http\Controllers\AccessTokenController::class, 'issueToken']);
+//        Route::post('/access-token/issue', [\Laravel\Passport\Http\Controllers\AccessTokenController::class, 'issueToken']);
 
         Route::group(['middleware' => ['logs', 'asymmetric']], function () {
             Route::group(['prefix' => 'access-token'], function () {

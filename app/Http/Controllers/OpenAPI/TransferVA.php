@@ -6,7 +6,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
-class TransferVA extends BaseController
+class TransferVA extends Controller
 {
     public function inquiry(Request $request)
     {
@@ -40,7 +40,7 @@ class TransferVA extends BaseController
         if ($response->serverError()) {
             return $this->sendServerError(4002500, 'Bad request');
         }
-        
+
         return $response;
     }
 }

@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\OpenAPI;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Controller as BaseController;
 use Illuminate\Http\Request;
-use function App\Helpers\vaData;
+use function App\Helpers\getVirtualAccountValue;
 
-class BaseController extends Controller
+class Controller extends BaseController
 {
     public function sendResponse($message, $successData = [])
     {
@@ -38,7 +38,7 @@ class BaseController extends Controller
         $response = [
             'responseCode' => $code,
             'responseMessage' => $message,
-            'virtualAccountData' => vaData($message),
+            'virtualAccountData' => getVirtualAccountValue($message),
         ];
 
         return response()->json($response, 400);

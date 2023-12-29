@@ -3,32 +3,32 @@
 namespace App\Http\Controllers\OpenAPI;
 
 use App\Http\Controllers\Controller;
+use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Laravel\Passport\Passport;
+use Laravel\Passport\Http\Controllers\AccessTokenController as ATCBase;
+use League\OAuth2\Server\Exception\OAuthServerException;
+use Psr\Http\Message\ServerRequestInterface;
 
-class AccessToken extends Controller
+class AccessToken extends ATCBase
 {
-    public function b2b(Request $request)
+    public function issueToken(ServerRequestInterface $request, $type = null)
     {
-        $grantType = $request->input('grantType');
-
-        if ($grantType === 'client_credentials') {
-            $clientKey = $request->header('X-CLIENT-KEY');
+        if ($type == 'b2b') {
+            $grantType = $request->getParsedBody()['grantType'];
+            $clientKey = $request->getHeaderLine('X-CLIENT-KEY');
             $clientSecret = Passport::client()->find($clientKey)->secret;
-
-            $url = url('/openapi/v1.0/access-token/issue');
-            $body = json_encode([
-                'grant_type' => 'client_credentials',
+            $body = ([
+                'grant_type' => $grantType,
                 'client_id' => $clientKey,
                 'client_secret' => $clientSecret,
             ]);
-            $response = Http::timeout(10)->withBody($body)->post($url);
-            if($response->status() != 100) {
-                return $response;
-            }
+            $requestModified = $request->withParsedBody($body);
+            $tokenResponse = parent::issueToken($requestModified);
 
-            $retrievedToken = json_decode($response->body());
+            $retrievedToken = json_decode($tokenResponse->getContent());
             return response()->json([
                 'responseCode' => '2007300',
                 'responseMessage' => 'Successful',
@@ -42,5 +42,10 @@ class AccessToken extends Controller
                 'responseMessage' => 'Nothing in here',
             ], 400);
         }
+    }
+
+    public function b2b(ServerRequestInterface $request)
+    {
+        return $this->issueToken($request, 'b2b');
     }
 }
