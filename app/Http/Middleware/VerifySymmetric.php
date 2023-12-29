@@ -80,7 +80,7 @@ class VerifySymmetric
             return false;
         }
         $currentDay = Carbon::now()->toDateString();
-        $isExistExternalId = Log::where('external_id', $externalId)->whereDate('timestamp', $currentDay)->exists();
+        $isExistExternalId = Log::where(['external_id' => $externalId])->whereDate(['timestamp' => $currentDay])->exists();
         if($isExistExternalId) {
             return false;
         }
