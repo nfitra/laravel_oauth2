@@ -1,17 +1,12 @@
 <?php
 
-namespace App\Http\Middleware;
+namespace App\Http\Middleware\Snap;
 
 use App\Models\Log;
 use Carbon\Carbon;
 use Closure;
 use DateTime;
-use Lcobucci\JWT\Configuration;
-use Lcobucci\JWT\Parser;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\App;
-use Laravel\Passport\ClientRepository;
-use Laravel\Passport\Passport;
 use Symfony\Component\HttpFoundation\Response;
 
 class VerifySymmetric
@@ -56,7 +51,6 @@ class VerifySymmetric
         $access_token = $request->bearerToken();
 
         $string2Sign = "$method:$uri_encoded:$access_token:$examined_body:$timestamp";
-//        print_r([$secretKey, $uri_encoded, $examined_body, $access_token, $string2Sign]);die();
 
         if (!$this->verifyHmacSHA512($secretKey, $string2Sign, $signature)) {
             return response()->json([

@@ -3,7 +3,6 @@
 namespace App\Http;
 
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
-use Laravel\Passport\Http\Middleware\CheckClientCredentials;
 
 class Kernel extends HttpKernel
 {
@@ -79,7 +78,7 @@ class Kernel extends HttpKernel
         'scopes' => \Laravel\Passport\Http\Middleware\CheckScopes::class,
         'scope' => \Laravel\Passport\Http\Middleware\CheckForAnyScope::class,
 
-        'asymmetric' => \App\Http\Middleware\VerifyAsymmetric::class,
-        'symmetric' => \App\Http\Middleware\VerifySymmetric::class,
+        'asymmetric' => Middleware\Snap\VerifyAsymmetric::class,
+        'symmetric' => Middleware\Snap\VerifySymmetric::class,
     ];
 }

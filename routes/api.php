@@ -18,16 +18,6 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-//Route::group(['prefix' => 'auth', 'middleware' => ['cors', 'json.response']], function () {
-//    Route::post('login', [AuthController::class, 'login'])->name('login');
-//    Route::post('register', [AuthController::class, 'register']);
-//
-//    Route::group(['middleware' => 'auth:api'], function () {
-//        Route::get('logout', [AuthController::class, 'logout']);
-//        Route::get('user', [AuthController::class, 'user']);
-//    });
-//});
-
 Route::group(['prefix' => 'client'], function () {
     Route::get('/asymmetric', [\App\Http\Controllers\Client::class, 'asymmetric']);
     Route::get('/symmetric', [\App\Http\Controllers\Client::class, 'symmetric']);
@@ -35,7 +25,6 @@ Route::group(['prefix' => 'client'], function () {
 
 Route::group(['middleware' => ['cors', 'json.response']], function () {
     Route::group(['prefix' => 'openapi/v1.0'], function () {
-//        Route::post('/access-token/issue', [\Laravel\Passport\Http\Controllers\AccessTokenController::class, 'issueToken']);
 
         Route::group(['middleware' => ['logs', 'asymmetric']], function () {
             Route::group(['prefix' => 'access-token'], function () {

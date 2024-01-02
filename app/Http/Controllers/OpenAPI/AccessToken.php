@@ -25,8 +25,8 @@ class AccessToken extends ATCBase
                 'client_id' => $clientKey,
                 'client_secret' => $clientSecret,
             ]);
-            $requestModified = $request->withParsedBody($body);
-            $tokenResponse = parent::issueToken($requestModified);
+            $modifiedReq = $request->withParsedBody($body);
+            $tokenResponse = parent::issueToken($modifiedReq);
 
             $retrievedToken = json_decode($tokenResponse->getContent());
             return response()->json([
