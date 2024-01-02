@@ -11,7 +11,7 @@ class Client extends Controller
     {
         $url = $request->input('url');
         $apiCredential = $request->input('api-credential');
-        $privateKey = \Storage::disk('local')->get(env('PRIVATE_KEY'));
+        $privateKey = \Storage::disk('local')->get('private.pem');
 
         $timestamp = $request->input('timestamp') ?: now()->toIso8601String();
 

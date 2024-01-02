@@ -51,7 +51,7 @@ class VerifyAsymmetric
             ], 401);
         }
 
-        $publicKey = \Storage::disk('local')->get(env('PUBLIC_KEY'));
+        $publicKey = \Storage::disk('local')->get('public.pem');
         $string2Sign = "$clientKey|$timestamp";
 
         if (!$this->verifysha256Rsa($publicKey, $string2Sign, $signature)) {

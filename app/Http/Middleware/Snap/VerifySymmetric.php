@@ -43,13 +43,11 @@ class VerifySymmetric
             ], 400);
         }
 
-        $secretKey = $this->getSecretKeyByExternalId();
-
+        $secretKey = $this->getSecretKey();
         $method = strtoupper($request->method());
         $uri_encoded = $this->uriEncode($request->getRequestUri());
         $examined_body = $this->examineBody($request->getContent());
         $access_token = $request->bearerToken();
-
         $string2Sign = "$method:$uri_encoded:$access_token:$examined_body:$timestamp";
 
         if (!$this->verifyHmacSHA512($secretKey, $string2Sign, $signature)) {
@@ -81,7 +79,7 @@ class VerifySymmetric
         return true;
     }
 
-    private function getSecretKeyByExternalId()
+    private function getSecretKey()
     {
         $client = auth('api')->client();
         return $client->secret;
