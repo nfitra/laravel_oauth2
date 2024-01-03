@@ -44,6 +44,13 @@ class VerifySymmetric
         }
 
         $secretKey = $this->getSecretKey();
+        if ($secretKey) {
+            return response()->json([
+                'responseCode' => '4017300',
+                'responseMessage' => 'Unauthorized. [Unknown client]',
+            ], 401);
+        }
+
         $method = strtoupper($request->method());
         $uri_encoded = $this->uriEncode($request->getRequestUri());
         $examined_body = $this->examineBody($request->getContent());
@@ -82,6 +89,8 @@ class VerifySymmetric
     private function getSecretKey()
     {
         $client = auth('api')->client();
+        if(is_null($client))
+            return false;
         return $client->secret;
     }
 
@@ -176,7 +185,7 @@ class VerifySymmetric
 
     private function examineBody($body)
     {
-        $minified_json = !is_null($body) ? $this->minifyJson($body) : null;
+        $minified_json = !empty($body) ? $this->minifyJson($body) : null;
         return strtolower(hash('SHA256', $minified_json));
     }
 }
